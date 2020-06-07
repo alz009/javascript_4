@@ -1,12 +1,14 @@
 <template>
   <section>
     <h1> {{title}} </h1>
-    <h2 v-if="isQuizPlaying"> [ジャンル]：{{genre}} </h2>
-    <h2 v-if="isQuizPlaying"> [難易度]：{{difficulty}} </h2>
+    <div v-if="isQuizPlaying">
+        <h2> [ジャンル]：{{genre}} </h2>
+        <h2> [難易度]：{{difficulty}} </h2>
+    </div>
     <hr>
     <p> {{description}} </p>
     <hr>
-    <button @click="onOk" v-if="isStart">開始</button>
+    <button @click="loadQuiz" v-if="isStart">開始</button>
     <button v-for="answer in answers" v-if="isQuizPlaying" @click="checkAnswer" :value="answer"> {{ answer }} </button>
     <button @click="restartQuiz" v-if="isFinish">ホームに戻る</button>
   </section>
@@ -19,7 +21,7 @@ export default {
         description: '',
         genre: '',
         difficulty: '',
-        Data: [],
+        quizData: [],
         isQuizPlaying: false,
         index: 0,
         answers: [],
@@ -34,22 +36,21 @@ export default {
     },
     methods: {
         getQuizData() {
-            return fetch('https://opentdb.com/api.php?amount=10&type=multiple')
+            fetch('https://opentdb.com/api.php?amount=10&type=multiple')
                 .then((response) => {
                     return response.json();
                 })
                 .then(res => {
-                    this.Data = res;
+                    this.quizData = res;
+                    this.isQuizPlaying = true;
+                    this.showQuiz();
                 })
         },
-        onOk() {
+        loadQuiz() {
             this.title = '取得中';
             this.description = '少々お待ちください';
             this.isStart = false;
-            this.getQuizData().then(() => {
-                this.isQuizPlaying = true;
-                this.showQuiz();
-                })
+            this.getQuizData();
         },
         htmlCodesDecoode(text) {
             text = text.replace(/\&amp\;/g,"&");
@@ -67,7 +68,7 @@ export default {
             return array;
         },
         showQuiz() {
-            this.nowQuizData = this.Data.results[this.index];
+            this.nowQuizData = this.quizData.results[this.index];
             this.answers = this.answers.concat(this.nowQuizData.incorrect_answers);
             this.answers.push(this.nowQuizData.correct_answer);
             this.answers = this.shuffleArray(this.answers);
